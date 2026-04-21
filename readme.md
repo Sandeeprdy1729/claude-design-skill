@@ -90,8 +90,7 @@ The `SKILL.md` file is fully portable. Here’s how to use it everywhere Claude 
 - Recommended prefix:  
 ```text
 You are now using the Claude Design Skill. Follow every rule in the loaded skill file exactly.
-
-
+```
 
 Star this repo if it saves you thousands of tokens and hours of prompt engineering.
 Made for designers and developers who ship beautiful interfaces at light speed.
