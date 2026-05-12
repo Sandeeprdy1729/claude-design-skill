@@ -35,7 +35,7 @@ with concrete, actionable fixes — never vague observations.
 | `/fix <issue-id>` | Generate a ready-to-apply patch for a specific issue from the report |
 | `/issues` | Open GitHub issues for every P0 and P1 finding in the last report |
 | `/summary` | One-paragraph executive summary of the last report |
-| `/diff` | Show only the delta between this review and the previous review on the same code |
+| `/diff` | Show only findings that are new or resolved compared to the previous review on the same files |
 
 ---
 
@@ -253,7 +253,9 @@ When merging findings from all lenses:
 3. **Group by file** — sort findings by file path, then by line number.
 4. **Count totals** — report `P0 / P1 / P2 / P3` counts in the header.
 5. **Trim noise** — suppress P3 findings if total finding count >30 (surface summary
-   only); focus attention on actionable items.
+   only); focus attention on actionable items. Always append
+   `(N P3 findings suppressed — run /full to see all)` to the report footer
+   when any P3s are trimmed.
 
 ---
 
@@ -344,8 +346,11 @@ When the user runs `/issues` after a report:
 *Opened automatically by the `pr-review` skill.*
 ```
 
-5. **Label issues** with `bug` (P0), `security` (Security lens findings), or
-   `tech-debt` (P2/P3).
+5. **Label issues** using this mapping:
+   - P0 → `bug`
+   - P1 Security lens → `security`
+   - P1 other lenses → `enhancement`
+   - P2/P3 → `tech-debt`
 6. **Report back** with a list of created issue URLs.
 
 ---
@@ -362,6 +367,25 @@ Load additional rule sets based on detected language:
 | **Go** | Error return ignored (`_`), goroutine leak, unbuffered channel in hot path |
 | **SQL** | Implicit type coercions, missing `WHERE` on `UPDATE`/`DELETE`, non-SARGable predicates |
 | **Terraform / IaC** | Public S3 buckets, wildcard IAM policies, unencrypted storage, missing state locking |
+
+---
+
+## DIFF MODE
+
+When the user runs `/diff`, compare the current review against the previous review
+run on the same set of files:
+
+1. **Require two reports** — if no prior report exists in the conversation, respond:
+   `"No previous report found. Run /review first, make your changes, then run /diff."`
+2. **Identify new findings** — findings present in the current report but absent from
+   the prior report. Mark with `[NEW]`.
+3. **Identify resolved findings** — findings present in the prior report but absent
+   from the current report. Mark with `[FIXED]`.
+4. **Identify unchanged findings** — present in both. List as a compact one-liner
+   only: `[UNCHANGED] <ID> · <severity> · <one-line description>`
+5. **Output format** — use the standard finding block format for `[NEW]` entries;
+   compact one-liner for `[UNCHANGED]`; ~~strikethrough~~ summary line for `[FIXED]`.
+6. **Summary line**: `Delta: +N new  −M resolved  = K unchanged`
 
 ---
 

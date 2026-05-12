@@ -83,7 +83,7 @@ Findings tagged by two or more lenses are automatically promoted one severity le
 /fix <issue-id>      Generate a ready-to-apply patch for a specific finding
 /issues              Open GitHub issues for every P0 and P1 finding
 /summary             One-paragraph executive summary of the last report
-/diff                Delta between this review and the previous review
+/diff                New/resolved findings vs the previous review on the same files
 ```
 
 ---
@@ -178,7 +178,7 @@ Claude Code plugin system:
 
 ```bash
 # Claude Code
-/plugin add ./skills/pr-review
+/plugin install ./skills/pr-review
 ```
 
 Or upload `SKILL.md` directly via the Claude.ai skills interface.
