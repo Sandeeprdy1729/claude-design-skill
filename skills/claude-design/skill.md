@@ -1,5 +1,5 @@
 ---
-name: claude-design-system
+name: design-system
 description: >
   Merged design engineering skill. Auto-activate on ANY UI/UX/design/frontend/component/animation/interface request.
   Covers: animation physics, anti-slop rules, motion library, token architecture, polish checklist, typography, color,
