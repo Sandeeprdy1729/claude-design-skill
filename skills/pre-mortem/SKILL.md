@@ -42,6 +42,9 @@ The pain surfaces after. This skill makes it surface before.
 | `/probability <scenario>` | Estimate probability of a specific failure mode |
 | `/blind-spots` | Surface what the user might be too close to the plan to see |
 | `/fix` | Switch out of adversarial mode — now help with solutions |
+| `/iterate <revised-plan>` | Re-run adversarial analysis on a revised plan; explicitly show which failure modes are addressed and which remain |
+| `/drill <assumption>` | Deep-dive on one assumption — full attack pattern, evidence against, falsification condition |
+| `/progress` | Show which failure modes have been addressed vs still outstanding this session |
 
 ---
 
@@ -64,6 +67,7 @@ User presents a plan, proposal, or decision
     │
     └─ Phase 5: The Verdict
           State the single biggest thing most likely to kill this
+          End every analysis with: "When you've addressed these, run /iterate with your revised plan."
 ```
 
 ---
@@ -380,3 +384,43 @@ Before deciding, model the actual numbers: what does the cap table look like,
 what is a realistic exit multiple, what is your dilution path to Series B?
 If the math still works, then evaluate the founders under pressure.
 ```
+
+---
+
+## ITERATION PROTOCOL
+
+### `/iterate <revised-plan>`
+
+When the user has revised the plan and wants to re-run the analysis:
+
+1. **Show a diff of the assumption scores.** For each assumption from the original analysis, show whether the revision addressed it:
+
+```
+ASSUMPTION TRACKER
+─────────────────────────────────────────────────────────────────
+  Assumption: "Users will pay for this"       Score: 25/25 → still 25/25  [NOT ADDRESSED]
+  Assumption: "We can ship in 3 months"       Score: 15/25 → 6/25         [ADDRESSED — timeline extended]
+  Assumption: "No one is building this"       Score: 20/25 → 20/25        [NOT ADDRESSED]
+  ─────────────────────────────────────────────────────────────
+  Progress: 1/3 critical assumptions addressed. Plan still has fatal flaws.
+─────────────────────────────────────────────────────────────────
+```
+
+2. **Re-run adversarial analysis** — but focus only on the unaddressed assumptions. Do not re-argue assumptions the revision genuinely resolved.
+
+3. **New failure modes introduced by the revision.** Sometimes a plan revision creates new vulnerabilities. Identify them.
+
+4. **Verdict update:** "The revision addressed [X]. The plan still fails at [Y]. Address [Y] and run /iterate again."
+
+### `/drill <assumption>`
+
+When the user wants to go deep on one assumption:
+
+1. **Gather evidence against it.** Find analogies, historical failures, structural reasons this assumption is fragile.
+2. **Rate of base failure.** For this type of assumption, how often is it wrong? (e.g., "estimated revenue from cold outreach is wrong by >2x in 80% of plans")
+3. **Falsification condition.** What would you need to observe in the next 30 days to know this assumption is wrong?
+4. **Minimum viable proof.** What's the cheapest test that would give you evidence the assumption holds?
+
+### Iteration is the point
+
+A plan that survives three rounds of `/iterate` is genuinely stress-tested. A plan that collapses on the first `/iterate` would have collapsed in reality — just more expensively. The goal is not to kill the plan. It is to either kill it cheaply or harden it before the user commits resources.

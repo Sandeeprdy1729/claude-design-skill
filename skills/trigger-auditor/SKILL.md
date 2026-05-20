@@ -33,12 +33,14 @@ test suite.
 | --- | --- |
 | `/audit <skill-name>` | Full audit of a single skill's description |
 | `/compare <skill-a> <skill-b>` | Detect overlap and routing ambiguity between two skills |
-| `/rewrite <skill-name>` | Generate a corrected description with rationale |
+| `/rewrite <skill-name>` | Generate a corrected description + auto-run test suite |
 | `/test <skill-name>` | Generate a test suite of 10 queries that should/shouldn't trigger the skill |
 | `/coverage <skill-name>` | Map every trigger keyword against its query coverage |
 | `/negative <skill-name>` | Find missing negative triggers — queries the skill should reject |
 | `/rank <query>` | Score all registered skills against a query and show the ranking |
 | `/batch` | Audit all skills in the registry at once; surface the top conflicts |
+| `/auto-iterate <skill-name>` | Keep rewriting until all 10 tests pass (max 5 iterations) |
+| `/test-now <skill-name>` | Immediately run the test suite against the current description |
 
 ---
 
@@ -471,19 +473,52 @@ Resolution strategy: input-type routing.
   Both       → Add "Do NOT activate when [other skill's input type] is present."
 ```
 
-### Example: `/rank` output
+---
 
-> User: "/rank 'help me fix this login bug'"
+## AUTO-ITERATION PROTOCOL
+
+### Every `/rewrite` auto-runs `/test-now`
+
+After every rewrite, immediately run the full 10-query test suite against the new description. Show the score before presenting the description. Format:
 
 ```
-QUERY RANKING: "help me fix this login bug"
-─────────────────────────────────────────
-  1.  pr-review      score: 0.61  [WARN — will load, but weakly matched]
-  2.  design-system  score: 0.18  [no load]
-  3.  context-router score: 0.05  [always-loaded, not ranked]
-─────────────────────────────────────────
-Analysis: "fix" + "login" + "bug" has weak overlap with pr-review's description.
-If the intent is debugging rather than PR review, consider adding a
-"bug-fix" or "debugging" skill with triggers: fix, debug, broken, not working,
-login issue, error.
+Rewrite iteration 1/5 — 6/10 tests passing
+─────────────────────────────────────────────────────────────────
+  ✓ "scan my diff for security holes"    → LOAD pr-review  [was failing]
+  ✓ "review this PR before I merge"      → LOAD pr-review
+  ✗ "help me fix this login bug"         → LOAD pr-review  [should not load]
+  ... (all 10 shown)
+─────────────────────────────────────────────────────────────────
+4 tests still failing. Diagnosing...
+→ Failures are false positives on "fix" and "debug" queries.
+→ Fix: add explicit exclusion. Running iteration 2.
 ```
+
+### `/auto-iterate <skill-name>`
+
+Automatically loop: diagnose failures → rewrite → test → repeat until 10/10 pass or 5 iterations exhausted.
+
+```
+AUTO-ITERATE: pr-review
+─────────────────────────────────────────────────────────────────
+  Iteration 1: 6/10 passing → diagnosing 4 failures
+  Iteration 2: 8/10 passing → diagnosing 2 failures
+  Iteration 3: 10/10 passing ✓  DONE
+─────────────────────────────────────────────────────────────────
+  Final description: [see below]
+  Stopped: all 10 tests pass.
+```
+
+If 10/10 is not reached after 5 iterations:
+
+```
+  Iteration 5: 8/10 passing — MAX ITERATIONS REACHED
+  Remaining failures: [list the 2 failing tests]
+  Diagnosis: These 2 queries are ambiguous by design — they share vocabulary
+  with skill X and cannot be disambiguated by description alone.
+  Recommendation: Add input-type routing or merge with skill X.
+```
+
+### Stopping rule
+
+A description is production-ready when: ≥9/10 tests pass AND no false-positive failures exist (i.e., the 1 allowed failure is a miss, not a false positive). False positives (wrong skill loading) are worse than misses (skill not loading) because they actively disrupt the user.

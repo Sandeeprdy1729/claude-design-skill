@@ -45,6 +45,8 @@ precisely.
 | `/diff <original> <rewrite>` | Show what changed and why in a rewrite |
 | `/anti-ai` | Run the AI cliché checklist on any pasted text |
 | `/reset` | Clear the stored fingerprint and start over |
+| `/score-loop` | Write → auto-score → auto-calibrate → rewrite until AI smell ≤2/10 |
+| `/compare <old> <new>` | Show exactly what changed between two versions and why it scored better |
 
 ---
 
@@ -63,10 +65,13 @@ User provides writing sample
     │     Apply fingerprint; use anti-AI rules as a filter
     │
     ├─ Phase 4: Self-Check
-    │     Score the output before presenting it
+    │     Auto-score the output (AI smell 0–10) before presenting
+    │     If score > 2: auto-calibrate and rewrite without asking
     │
     └─ Phase 5: Iteration
           On feedback, update the fingerprint model — not just the output
+          After every rewrite, auto-run /check and show score
+          End with: "Run /score-loop to iterate until score ≤2."
 ```
 
 ---
@@ -342,4 +347,73 @@ VIOLATIONS
 REWRITTEN
   Use [specific technology] to [specific outcome]. That's it.
   (Provide the actual topic and I'll write a real sentence.)
+```
+
+---
+
+## SCORE-LOOP PROTOCOL
+
+### `/score-loop`
+
+Automatically loop: write → score → calibrate → rewrite → score → repeat until AI smell ≤2/10.
+
+```
+SCORE LOOP: iteration 1/5
+─────────────────────────────────────────────────────────────────
+  AI smell score: 7/10
+  Issues: "furthermore" (formality), passive opener, 3 hollow modifiers
+  Calibrating fingerprint: [adjustments made to rhythm/vocabulary model]
+  Rewriting...
+
+SCORE LOOP: iteration 2/5
+  AI smell score: 4/10
+  Issues: sentence 3 still sounds constructed, not observed
+  Calibrating...
+
+SCORE LOOP: iteration 3/5
+  AI smell score: 2/10  ✓ TARGET REACHED
+─────────────────────────────────────────────────────────────────
+  Final output: [text below]
+  Fingerprint updated with 3 calibrations from this session.
+```
+
+If score ≤2 not reached after 5 iterations:
+
+```
+  Iteration 5: score 3/10 — MAX ITERATIONS
+  Remaining AI smell: [specific flagged phrases]
+  These phrases are structurally correct but feel constructed because
+  the fingerprint has insufficient sentence-variety data.
+  Recommendation: Paste one more writing sample to expand the fingerprint.
+  Run /score-loop again after.
+```
+
+### `/compare <old> <new>`
+
+Show exactly what changed between two versions and why it improved:
+
+```
+COMPARE: iteration 1 → iteration 2
+─────────────────────────────────────────────────────────────────
+  CHANGED
+    - "Furthermore, this approach enables..." → "This works because..."
+      Reason: "Furthermore" is a transition hedge. Replaced with direct causation.
+    - "It is important to note that..." → [deleted]
+      Reason: Hollow opener. The note stands without announcing itself.
+    - Sentence 4: passive → active construction
+      Reason: Fingerprint shows user writes in active voice 87% of the time.
+
+  SCORE CHANGE
+    AI smell: 7/10 → 4/10  (−3)
+    Voice match: 54% → 71%  (+17pp)
+─────────────────────────────────────────────────────────────────
+```
+
+### After every `/rewrite` — auto score
+
+Every rewrite ends with a score line before the output is presented:
+
+```
+AUTO-SCORE: 3/10 AI smell  [Close — one more calibration recommended]
+→ Run /score-loop to drive this to ≤2 automatically.
 ```

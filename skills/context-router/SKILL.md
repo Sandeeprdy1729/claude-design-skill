@@ -40,6 +40,10 @@ context noise low.
 | `/budget` | Show current context budget usage: tokens used / remaining / by skill |
 | `/reset` | Unload all skills, reset to router-only state |
 | `/audit` | Explain why each currently-loaded skill was selected for the active query |
+| `/history` | Show all skills loaded this session, what triggered them, and how many times each was used |
+| `/hot` | Show the 3 most-used skills this session — consider pre-loading these permanently |
+| `/explain` | Show the confidence score and signal matches that drove the current routing decision |
+| `/why <skill-name>` | Explain in detail why a specific skill was or was not loaded for the last query |
 
 ---
 
@@ -441,3 +445,46 @@ Without context-router: 47 MCP tool definitions in context → model picks wrong
 reasoning degrades, latency increases.
 
 With context-router loading `pr-review`: 1 tool exposed → model always picks correctly.
+
+---
+
+## ROUTING LOG FORMAT
+
+After every routed response, append a one-line routing summary so the user always knows what's active:
+
+```
+[Router] Loaded: pr-review (97% confidence · "review" signal) | Budget: 8 200/169 000 tokens | /explain for details
+```
+
+This line keeps iteration fast — the user sees the current state without running `/audit`.
+
+---
+
+## ITERATION AND HISTORY
+
+**Session history tracking:** Every load/unload event is logged internally with the triggering query and confidence score.
+
+`/history` output format:
+
+```
+SESSION ROUTING HISTORY
+  Turn 1  → pr-review loaded  (query: "review this PR")         used: 3 turns
+  Turn 4  → pr-review unloaded  (single-use cleanup)
+  Turn 5  → design-system loaded  (query: "redesign the button") used: 2 turns
+  Turn 7  → design-system still active
+
+  HOT SKILLS (most used):
+  1. pr-review        3 turns loaded
+  2. design-system    2 turns loaded
+
+  → Consider adding these to always-on in .context-router.yml
+```
+
+**`/hot` output** surfaces co-occurrence patterns: which two skills are loaded together most often. If pr-review and security are always co-loaded, suggest merging their triggers into a single routing rule.
+
+**Routing improvement loop:**
+1. Run `/history` after a session.
+2. If any skill was loaded with confidence <80% and the load was correct → add the triggering query's phrasing to the skill's trigger list.
+3. If a skill was loaded and turned out to be wrong → add the triggering query as a negative trigger.
+4. Run `/registry` to confirm the update took effect.
+5. Test with `/route <original query>` to verify the confidence score improved.

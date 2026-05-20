@@ -46,6 +46,10 @@ scores its quality, and injects the right context per question type.
 | `/review` | Display the current context template for editing |
 | `/update <field> <value>` | Update a specific field in the context template |
 | `/assume` | List what Claude is currently assuming about the user in the absence of context |
+| `/apply <question>` | Answer a question right now through the lens of the built context — skip the generic answer |
+| `/deepen <dimension>` | Drill deeper into any context dimension with more specific questions |
+| `/freshness` | Show when each dimension was last updated; flag dimensions that are stale or thin |
+| `/next` | Given what's been built so far, what single context dimension would most improve the next answer |
 
 ---
 
@@ -68,6 +72,8 @@ User wants to stop re-explaining their context
     │
     └─ Phase 5: Iteration
           Update the template when context changes; propagate changes
+          After /build: immediately offer to answer the user's first question through context
+          After drift: identify which dimension drifted and ask 1 targeted update question
 ```
 
 ---
@@ -456,3 +462,27 @@ ask what they'd use it for. If no, you have your answer.
 
 Build mobile when a paying customer says "I'd pay more for mobile."
 ```
+
+---
+
+## ITERATION RULES
+
+**After `/build` completes:** Do not wait. Immediately ask: "What's your first question? I'll answer it with your context." This collapses the gap between building context and using it.
+
+**After drift is detected:** Do not just report it. Pick the dimension that drifted and ask one targeted question to update it. "Your audience dimension says non-technical — but I gave a technical answer. Is your target user more technical than what you originally told me?"
+
+**`/deepen <dimension>` protocol:**
+
+When a dimension is thin (scored 1–2), go deeper with probes specific to that dimension:
+
+| Thin dimension | Deepening probes |
+|---|---|
+| Role | "What decision in the last month took the most time? What made it hard?" |
+| Project | "What's the one thing you'd kill to have working by end of this month?" |
+| Stack | "What part of the stack do you trust least? What's the brittlest piece?" |
+| Audience | "Describe the person who would get the most value from this, in one sentence." |
+| Constraints | "What have you already tried that you'd never do again?" |
+
+**Freshness decay:** Flag any dimension that hasn't been updated in >10 conversation turns. Contexts go stale. A stale context is worse than no context because it feels confident but is wrong.
+
+**Context quality → answer quality:** After every response, silently score whether the answer would have been different without context. If the answer is identical to what a generic user would get, the context dimension that should have differentiated it is probably underfilled. Flag this to the user.

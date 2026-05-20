@@ -48,6 +48,9 @@ Claude is presented with a clean, deduplicated toolset.
 | `/config` | Generate a `.mcp-dedup.yml` routing config ready to paste into your project |
 | `/audit <server>` | List all tools from a single server with duplicate annotations |
 | `/stats` | Summary: total tools, duplicate count, reduction %, canonical operations |
+| `/simulate <query>` | Test the routing config by running a natural-language query through it — shows which tool wins |
+| `/test-all` | Run 10 common operations through the routing layer; show tool resolution for each |
+| `/verify` | After generating config, automatically run /simulate on 5 common queries to confirm routing works |
 
 ---
 
@@ -467,3 +470,40 @@ message.send           –        –        –       –
 
 ●  canonical  ○  demoted  ↑  override  ✕  suppressed  –  not available
 ```
+
+---
+
+## VERIFICATION AND ITERATION LOOP
+
+After `/config` generates the routing config, do not stop. Automatically run `/verify`:
+
+**`/verify` protocol:**
+
+Run these 5 simulation queries through the generated config and show which tool each resolves to:
+
+1. "Create a new issue about the login bug" → should resolve to `issue.create` canonical
+2. "Comment on issue #42" → should resolve to `issue.comment` canonical
+3. "Open a pull request for the auth branch" → should resolve to `pr.create` canonical
+4. "Search the codebase for 'session timeout'" → should resolve to `search.code` canonical
+5. "Get the contents of src/auth.ts" → should resolve to `repo.file` canonical
+
+If any simulation resolves to a suppressed or wrong tool, flag it:
+
+```
+VERIFY RESULT
+  ✓ issue.create  → github/create_issue
+  ✓ issue.comment → github/add_issue_comment
+  ✗ pr.create     → gitlab/create_merge_request  (WRONG — should be github/create_pull_request)
+    Fix: add trigger "pull request" to github entry; current rule matches "merge request" first
+
+  3/5 routing rules verified. 1 fix required before config is safe to deploy.
+  Run /config after fixing to regenerate.
+```
+
+**Iteration after fix:**
+1. User corrects the routing rule or server priority.
+2. Re-run `/config` → `/verify`.
+3. Repeat until all 5 simulations pass.
+4. Then run `/stats` to confirm the final reduction number.
+
+**Reduction goal:** A healthy deduplication should reduce exposed tools by ≥40%. If reduction is <40%, the server priority list is likely incomplete — ask the user to confirm their primary server for each category.

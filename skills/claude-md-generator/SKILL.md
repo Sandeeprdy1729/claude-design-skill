@@ -47,6 +47,10 @@ context that prevents Claude from making the mistakes it actually makes in this 
 | `/trim` | Remove entries that haven't prevented a mistake in ≥30 days (with confirmation) |
 | `/explain <entry>` | Show why a specific entry was added (trace to the originating gap) |
 | `/reset` | Regenerate the entire file set from a fresh scan, discarding manual edits |
+| `/completeness` | Score context completeness 0–10; show what's missing and how much each gap costs |
+| `/gaps-remaining` | Sorted list of remaining context gaps by mistake frequency (highest pain first) |
+| `/drill <category>` | Deep-dive one gap category with exhaustive coverage — don't stop at the obvious |
+| `/iterate` | Scan → patch → score → repeat until completeness ≥ 8/10 |
 
 ---
 
@@ -70,9 +74,13 @@ Trigger: user asks for CLAUDE.md, or Claude just made a mistake
     │     Write new entries; preserve manually written content
     │     Add provenance comments for every generated entry
     │
-    └─ Phase 5: Validation
-          Verify root line count, no duplicate entries, no dead references
-          Confirm every subfolder file is reachable from root
+    ├─ Phase 5: Validation
+    │     Verify root line count, no duplicate entries, no dead references
+    │     Confirm every subfolder file is reachable from root
+    │
+    └─ Phase 6: Completeness Score + Next Gap
+          Score 0–10; surface the single highest-impact gap still open
+          End every session with: "Completeness: X/10. Next gap to close: [gap]."
 ```
 
 ---
@@ -666,3 +674,37 @@ TRIM CANDIDATES (entries with no confirmed mistake prevention in 30+ days)
   Confirm removal of 3 entries? This cannot be undone without /reset.
   [yes / no / review-each]
 ```
+
+---
+
+## COMPLETENESS SCORING
+
+Every `/scan`, `/audit`, `/generate`, and `/patch` must end with a completeness score.
+
+```text
+COMPLETENESS: 6/10
+─────────────────────────────────────────────────────────
+  HIGH IMPACT GAPS (fix these first)
+    ✗ [score: 9] Test command — Claude will get this wrong on every session
+    ✗ [score: 8] Env var setup — missing DATABASE_URL causes silent failures
+    ✗ [score: 7] Generated file list — Claude will edit auto-generated files
+
+  MEDIUM IMPACT GAPS
+    ✗ [score: 5] Code style config — linting rules undocumented
+    ✗ [score: 4] Feature flag location — guessable but not confirmed
+
+  → Run /drill [category] to go deep on any gap.
+  → Run /iterate to close all HIGH IMPACT gaps automatically.
+─────────────────────────────────────────────────────────
+```
+
+**`/iterate` cycle:**
+
+```
+1. /completeness   → score the current state
+2. /drill [top gap] → close the highest-impact gap with exhaustive coverage
+3. /completeness   → re-score
+4. repeat until score ≥ 8/10
+```
+
+Stop the cycle and report final score when 8/10 is reached or no high-impact gaps remain.

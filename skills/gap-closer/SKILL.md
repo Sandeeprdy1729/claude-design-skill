@@ -44,6 +44,9 @@ being shippable, and output exactly one next action.
 | `/scope` | Separate what's in scope for shipping from what can come later |
 | `/blocker` | Identify the one gap that blocks all other progress |
 | `/sequence` | If multiple gaps are required, order them by dependency |
+| `/check-in` | Mark the current action done; immediately get the next action — don't stop between gaps |
+| `/progress` | Show: gaps closed / gaps remaining / estimated sessions to ship |
+| `/loop` | Enter continuous mode: complete → re-audit → next, repeat until done criteria are met |
 
 ---
 
@@ -209,6 +212,8 @@ NEXT ACTION
   Done when: [concrete observable state that confirms this is finished]
   Unblocks : [what becomes possible after this is done]
   Time     : [rough estimate: 30 min / 2 hours / half a day]
+
+  → When done: run /check-in to get the next action immediately.
 ─────────────────────────────────────────────────────────────────
 ```
 
@@ -353,6 +358,38 @@ SCOPE ALERT
 - **Done criteria are minimal, not comprehensive.** The purpose is to define the bar for shipping, not to describe the final product. Keep done criteria to 3–5 items.
 - **Time-box the next action.** If the next action is not completable in a single session, it is not one action — it is a milestone. Break it into session-sized pieces and identify the first one.
 - **Never add new scope.** When the user describes their project, the output should always reduce the scope of what's required, not expand it. Every OPTIONAL classification is progress.
+
+---
+
+## CHECK-IN AND LOOP PROTOCOL
+
+**`/check-in` behaviour:**
+When the user runs `/check-in`, treat the last NEXT ACTION as completed.
+1. Update the gap classification — mark that gap as closed.
+2. Re-run Phase 3 (Blocker Identification) against the remaining gaps.
+3. Immediately output the next NEXT ACTION without re-doing the full audit.
+4. Show a progress line: "Gaps closed: N / N+M remaining before ship."
+
+**`/loop` behaviour:**
+Enter continuous mode. After each `/check-in`, automatically produce the next action without waiting. Continue until:
+- All BROKEN and MISSING gaps are closed, OR
+- The user says "stop" / "/done"
+
+Loop output format per iteration:
+
+```
+──────────────────────────────── ITERATION [N] ────────────────────────────────
+  Just closed: [gap name]
+  PROGRESS: [N] closed · [M] remaining
+
+  NEXT ACTION
+  [action — one sentence]
+  Done when: [signal]  |  Time: [estimate]
+────────────────────────────────────────────────────────────────────────────────
+  → /check-in when done  |  /done to see if you can ship now
+```
+
+**Why iterate matters:** The single biggest reason 80%-done projects don't ship is that users stop after one session. The `/loop` protocol makes re-entering work frictionless — the user always knows exactly what to do next and the path to done is visible.
 
 ---
 

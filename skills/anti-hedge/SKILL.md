@@ -39,6 +39,10 @@ it with new information rather than guessing at the reasoning.
 | `/audit` | Show the full elimination reasoning for the last decision |
 | `/flip` | Show the argument for the option that was ruled out |
 | `/stakes` | Ask: how reversible is this? Adjusts confidence language accordingly |
+| `/chain` | After deciding, surface the next 2 decisions this choice forces — don't stop at one |
+| `/deeper` | Stress-test the single most fragile assumption behind the current decision |
+| `/iterate <new info>` | Re-run the decision with new information; explicitly state what changed and why |
+| `/session` | Show all decisions made this session with their chain dependencies |
 
 ---
 
@@ -59,8 +63,11 @@ User asks a comparative question
     ├─ Phase 4: Elimination Audit
     │     Show exactly what was ruled out and why
     │
-    └─ Phase 5: Override Path
-          Tell the user what single new constraint would flip the decision
+    ├─ Phase 5: Override Path
+    │     Tell the user what single new constraint would flip the decision
+    │
+    └─ Phase 6: Decision Chain
+          Surface the next 2 decisions this choice forces — iteration doesn't stop here
 ```
 
 ---
@@ -331,3 +338,54 @@ WHAT WOULD FLIP THIS
   If >60% of your data is unstructured (arbitrary user-generated content, JSON
   blobs, nested variable schemas), MongoDB becomes defensible.
 ```
+
+---
+
+## PHASE 6 — DECISION CHAIN
+
+Every decision opens the next one. After committing, surface what the user must decide next — so iteration doesn't stop.
+
+**Decision chain format (append to every response):**
+
+```text
+DECISION UNLOCKS
+  Now that you've chosen [X], you face:
+  → [Next decision 1]: [one sentence framing the question]
+  → [Next decision 2]: [one sentence framing the question]
+
+  Run /decide [next decision] when ready.
+```
+
+**Chain rules:**
+- Always surface exactly 2 downstream decisions — not 1 (too thin), not 5 (too wide).
+- The first should be the decision that is now **immediately unblocked** by this choice.
+- The second should be the decision that is **most likely to invalidate** the choice just made if deferred too long.
+- Do not frame downstream decisions as tasks — frame them as decisions. "Choose your ORM" not "install your ORM."
+
+**Example chain after choosing Next.js:**
+
+```text
+DECISION UNLOCKS
+  Now that you've chosen Next.js:
+  → Deployment target: Vercel (zero config) vs self-hosted (more control, more ops).
+    This determines your CI pipeline shape from day one.
+  → State management: React Query (server state only) vs Zustand (server + client).
+    Next.js App Router changes the tradeoffs here vs Pages Router — decide before
+    building any data-fetching logic.
+
+  Run /decide [deployment target] or /decide [state management] when ready.
+```
+
+---
+
+## ITERATION RULES
+
+When `/iterate <new info>` is called:
+
+1. Identify which constraint in the hierarchy the new information affects.
+2. If it changes the constraint order → re-run Phase 2 with the updated hierarchy and state the new decision explicitly.
+3. If it doesn't change anything → explain why (one sentence) and hold.
+4. Always show a diff: "Previously: [X]. Now: [Y]. Because: [constraint that changed]."
+5. Never re-explain the entire context. Go straight to what changed.
+
+**Iteration is not weakness.** Updating a decision when constraints change is correct behaviour. Holding a decision when the user pushes back without new constraints is also correct behaviour. The difference is always: did new information arrive?

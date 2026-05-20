@@ -42,6 +42,9 @@ scores, effort estimates, and concrete before/after fixes — never vague observ
 | `/summary` | One-paragraph executive summary of the last report |
 | `/tldr` | One-sentence summary for Slack/Discord notifications |
 | `/diff` | New/resolved findings vs the previous review — compares against main branch baseline |
+| `/iterate <issue-id>` | Fix an issue, then re-check just that code area — show what changed and confirm the fix |
+| `/focus <issue-id>` | Deep dive on one finding: full context, step-by-step fix guide, before/after example |
+| `/progress` | Show: findings fixed this session / findings still open / next priority |
 
 ---
 
@@ -794,6 +797,50 @@ Claude produces a complete, ready-to-apply patch in unified diff format.
 
 Claude explains SQL injection from first principles — what it is, why parameterised
 queries prevent it, real-world breach examples, and links to OWASP and CWE.
+
+---
+
+## PROGRESS TRACKING AND ITERATION LOOP
+
+### Session Progress Header
+
+Every `/review`, `/fix`, `/iterate`, and `/progress` output begins with:
+
+```
+SESSION PROGRESS
+  Fixed this session: [N] findings  |  Still open: [P0: X · P1: Y · P2: Z]
+  Next priority: [issue-id] — [one-line description]
+```
+
+### `/iterate <issue-id>` Protocol
+
+1. Show the before-state (the exact code that was flagged).
+2. Ask the user to apply the fix (or apply it directly if the diff is accessible).
+3. Re-scan only the affected file and line range — not the full diff.
+4. Report the result: `[FIXED]` or `[STILL PRESENT]` or `[NEW ISSUE INTRODUCED]`.
+5. Immediately show the next highest-priority finding.
+
+```
+ITERATE: SEC-001
+  Before : db.execute(f"SELECT * FROM users WHERE id = {user_id}")
+  Fix    : db.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+  Status : [FIXED] — SQL injection vector removed
+
+  SESSION PROGRESS: 1/4 P0s fixed
+  → Next: /iterate SEC-002 (hardcoded API key in config.py line 18)
+```
+
+### `/focus <issue-id>` Protocol
+
+When the user needs to deeply understand a finding before fixing it:
+
+1. Full context: what does this code do, why is this specific pattern dangerous?
+2. Exploitation scenario: concretely, how would an attacker use this?
+3. Step-by-step fix: each change needed, in order, with code snippets.
+4. Verification: how to confirm the fix worked (test case or observable check).
+5. Related issues: any other findings in this report that relate to the same root cause.
+
+Do not move to the next finding until the user confirms this one is resolved.
 
 ### Example: CI pipeline integration
 

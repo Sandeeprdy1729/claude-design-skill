@@ -42,6 +42,10 @@ All available. Activate on request.
 | `/typeset` | Fix typography. Follow TYPE rules |
 | `/layout` | Restructure spatial composition |
 | `/overdrive` | Max variance + motion + density |
+| `/bottleneck` | Identify the single visual issue causing the most damage to the overall feel — fix this first |
+| `/loop` | Run audit → fix top P0 → re-audit cycle until P0s are cleared |
+| `/next` | Given current state, what is the single most valuable next command to run |
+| `/progress` | Show: P0s fixed / P0s remaining / P1s fixed / P1s remaining this session |
 
 ---
 
@@ -322,6 +326,32 @@ Output all design reviews as table only:
 | Before | After | Why |
 
 No prose. No preamble. No flattery.
+
+After every audit or critique, append:
+
+```
+SESSION PROGRESS
+  P0 fixed: [N] / [total P0s]   P1 fixed: [N] / [total P1s]
+→ next: [single most valuable command to run now]
+```
+
+---
+
+## ITERATION LOOP
+
+`/loop` runs the following cycle until all P0s are resolved:
+
+```
+1. /audit        → identify P0s
+2. /fix [P0-id]  → apply the fix
+3. /audit        → verify fix, find next P0
+4. repeat until P0 count = 0, then run /polish
+```
+
+After `/loop` completes: "All P0s cleared. Run `/polish` for pre-ship pass, or `/next` to see highest-value P1."
+
+**`/bottleneck` logic:**
+Score every open issue on two axes: `visual_damage` (how much it degrades the feel) × `blast_radius` (how many other elements it affects). Surface the single highest-scoring issue. Fixing this one first unblocks the most downstream improvement.
 
 ---
 

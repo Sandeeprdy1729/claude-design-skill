@@ -42,6 +42,9 @@ This skill runs the question through a root-cause check before answering it.
 | `/xy` | Diagnose if this is an XY problem |
 | `/goal` | Ask: what are you ultimately trying to achieve? |
 | `/why` | Run a 5-why root cause chain on the stated problem |
+| `/deeper` | Take the answer to the real problem and check if there's yet another level — iterate until bedrock |
+| `/why-chain` | Run the full 5-why chain automatically and show every level at once |
+| `/validate <solution>` | Test a proposed solution against the detected real problem — does it actually solve it? |
 
 ---
 
@@ -62,8 +65,13 @@ User asks a question
     ├─ Phase 4: Consent Gate
     │     Offer: answer this question, or the real one?
     │
-    └─ Phase 5: Answer
-          Answer the chosen question — fully, not hedged
+    ├─ Phase 5: Answer
+    │     Answer the chosen question — fully, not hedged
+    │
+    └─ Phase 6: Depth Check
+          After answering, run Phase 2 on the answer itself
+          If the answer contains a wrong assumption → surface it
+          Tell the user: "Run /deeper to check if this answer hides another layer."
 ```
 
 ---
@@ -372,4 +380,73 @@ REAL PROBLEM DETECTED
 [A] Answer: how to optimise queries in general
 [B] Answer: how to instrument and identify slow queries before optimising
 [C] Both
+```
+
+---
+
+## ITERATION AND DEPTH PROTOCOL
+
+### `/deeper` — One more level
+
+After answering the real question, check whether the answer itself contains a wrong assumption.
+
+**Pattern:** "I answered that you should [X]. But [X] assumes [assumption]. Is that assumption actually true for your situation?"
+
+```
+DEPTH CHECK: Level 2
+─────────────────────────────────────────────────────────────────
+  I answered  : "Instrument your queries with EXPLAIN ANALYZE"
+  This assumes: You're running PostgreSQL and have direct DB access
+  If wrong    : You may be on a managed DB with restricted query plans
+  → Is that assumption correct? If not, the real question shifts again.
+─────────────────────────────────────────────────────────────────
+  Run /deeper to check level 3.
+```
+
+Keep going until the depth check produces no new reframes. That is bedrock.
+
+### `/why-chain` — Full 5-why at once
+
+Run all 5 levels automatically and display the full chain:
+
+```
+WHY CHAIN
+─────────────────────────────────────────────────────────────────
+  Why 1: Why are you optimising queries?
+         → "The app feels slow"
+  Why 2: Why does the app feel slow?
+         → "Page loads take 3+ seconds"
+  Why 3: Why do pages take 3 seconds?
+         → "I think it's the database"
+  Why 4: Why do you think it's the database?
+         → "I don't actually know — I assumed"
+  Why 5: What do you actually know about where the slowness is?
+         → "Nothing — I haven't measured it"
+
+  ROOT CAUSE: The user doesn't have performance data. They are solving
+  a problem they haven't confirmed exists.
+
+  REAL QUESTION: How do I measure where the slowness comes from?
+─────────────────────────────────────────────────────────────────
+```
+
+### `/validate <solution>` — Test before building
+
+When the user has a proposed solution, check whether it actually solves the root cause.
+
+1. Map the proposed solution back to the detected root cause.
+2. Check: does the solution address the root cause directly, or does it address a symptom?
+3. If symptom-only: state what the root cause still needs.
+4. If root cause addressed: confirm and offer to answer "how to implement it well."
+
+```
+SOLUTION VALIDATION
+─────────────────────────────────────────────────────────────────
+  Proposed solution : Add database indexes
+  Root cause        : Unknown slowness — not yet attributed to DB
+  Verdict           : PREMATURE — adding indexes may not help because
+                      the slowness source is unconfirmed. Install
+                      query instrumentation first; if DB is confirmed
+                      slow, indexes become the right next question.
+─────────────────────────────────────────────────────────────────
 ```
