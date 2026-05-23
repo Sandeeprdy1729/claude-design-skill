@@ -4,6 +4,7 @@
 Load once → Ship zero-slop designs → Save ~98% on design prompt tokens.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=flat&logo=discord&logoColor=white)](https://discord.gg/MmsTNm8WF6)
 
 ---
 
@@ -11,7 +12,7 @@ Load once → Ship zero-slop designs → Save ~98% on design prompt tokens.
 
 This repository delivers a single, production-ready `SKILL.md` file that fuses seven battle-tested design systems into one token-efficient knowledge base for Claude AI:
 
-- Emil Kowalski’s Animation Physics  
+- Emil Kowalski's Animation Physics  
 - Impeccable Design Vocabulary + 17 powerful slash commands  
 - /polish pre-ship checklist  
 - Taste Skill anti-slop rules + Bento 2.0 principles  
@@ -70,12 +71,12 @@ Once the skill is active, use these built-in commands:
 
 ## Using the Skill in **All** Coding Spaces & AI Agents
 
-The `SKILL.md` file is fully portable. Here’s how to use it everywhere Claude (or Claude-powered tools) is available:
+The `SKILL.md` file is fully portable. Here's how to use it everywhere Claude (or Claude-powered tools) is available:
 
 ### 1. Cursor.sh / Cursor Composer
 - Open **Settings → Rules** (or `.cursor/rules`)
 - Create a new rule file and paste the entire content of `SKILL.md`
-- Or upload `SKILL.md` to your project’s knowledge base (Cursor supports project-level files)
+- Or upload `SKILL.md` to your project's knowledge base (Cursor supports project-level files)
 - Reference with: `Apply design skill`
 
 ### 2. Windsurf / Any Claude Desktop / Web IDE
@@ -94,3 +95,9 @@ You are now using the Claude Design Skill. Follow every rule in the loaded skill
 
 Star this repo if it saves you thousands of tokens and hours of prompt engineering.
 Made for designers and developers who ship beautiful interfaces at light speed.
+
+---
+
+## Community
+
+Join the Discord to share skills, get help, and follow updates: **[discord.gg/MmsTNm8WF6](https://discord.gg/MmsTNm8WF6)**
